@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>محاكي جهاز الميزان (Level)</title>
+<style>
+:root{--bg:#eef2f4;--grid:#d9e1e5;--card:#fff;--text:#1b2a33;--muted:#5d6f7a;--accent:#e8590c;--accent-t:#fff;--ok:#2b8a3e;--bad:#c92a2a;--line:#c5d0d6;--sky:#dbe9f1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181d;--grid:#1a252c;--card:#18232a;--text:#e6edf0;--muted:#8fa3ae;--accent:#ff8a3d;--accent-t:#111;--ok:#69db7c;--bad:#ff8787;--line:#2c3b44;--sky:#14232c}}
+:root[data-theme="dark"]{--bg:#10181d;--grid:#1a252c;--card:#18232a;--text:#e6edf0;--muted:#8fa3ae;--accent:#ff8a3d;--accent-t:#111;--ok:#69db7c;--bad:#ff8787;--line:#2c3b44;--sky:#14232c}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),linear-gradient(180deg,rgba(22,74,122,.14),transparent 360px);background-size:28px 28px,28px 28px,100% 100%;color:var(--text);font-family:'Cairo',Tahoma,'Segoe UI',sans-serif;line-height:1.7}
+main{max-width:800px;margin:0 auto;padding:14px 14px 40px}
+h1{font-size:1.5rem;font-weight:800;margin:6px 0 2px}
+.sub{color:var(--muted);margin:0 0 10px;font-size:.93rem}
+nav{display:flex;gap:6px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:6px 0;z-index:5}
+nav button{flex:1;padding:9px 6px;border:2px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-weight:600;border-radius:10px;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-t)}
+section{display:none}section.on{display:block}
+.card{background:var(--card);background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;box-shadow:0 2px 8px rgba(11,42,74,.08)}
+.card h2{font-size:1.08rem;margin:0 0 6px;font-weight:800}
+.formula{direction:ltr;text-align:center;font-family:ui-monospace,Menlo,monospace;background:var(--sky);border-radius:8px;padding:7px;margin:6px 0}
+ol,ul{margin:6px 0;padding-inline-start:22px}
+svg{display:block;width:100%;height:auto}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{padding:6px 14px;border-radius:999px;border:2px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-weight:600;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-t)}
+.chip.done::after{content:" ✓"}
+.st{display:flex;gap:6px;flex-wrap:wrap}
+.st span{padding:4px 12px;border-radius:999px;border:2px solid var(--line);font-size:.85rem;font-weight:600;color:var(--muted)}
+.st span.d{border-color:var(--ok);color:var(--ok)}
+input[type=number]{font:inherit;width:100%;padding:7px 8px;border:2px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);direction:ltr;text-align:center}
+input[type=range]{width:100%;accent-color:var(--accent)}
+label{font-size:.85rem;color:var(--muted);display:block}
+.btn{font:inherit;font-weight:700;padding:9px 16px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-t);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--text);border:2px solid var(--line)}
+.msg{min-height:1.6em;margin-top:8px;font-weight:600}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.scroll{overflow-x:auto}
+.scroll svg.wide{min-width:560px}
+table{border-collapse:collapse;width:100%;min-width:480px;text-align:center;direction:ltr}
+th,td{border:1px solid var(--line);padding:6px 4px;font-size:.9rem}
+th{background:var(--sky)}
+.eye{max-width:310px;margin:0 auto}
+.two{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:640px){.two{grid-template-columns:310px 1fr}}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.lock{opacity:.4;pointer-events:none}
+.bub{max-width:130px;margin:0 auto}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.brand{display:flex;align-items:center;gap:12px;margin:4px 0 10px;background:linear-gradient(135deg,#0b2a4a,#164a7a);color:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 4px 14px rgba(11,42,74,.25)}
+.brand img,footer img{border-radius:50%;background:#fff;border:2px solid var(--line);flex:none}
+.brand img{width:78px;height:78px}
+.brand h1{margin:0;color:#fff;font-size:1.3rem}
+.by{font-size:.85rem;color:#c5d6e6;margin:0;font-weight:600}
+footer{margin-top:22px;text-align:center;padding:14px;border-top:1px solid var(--line)}
+footer img{width:100px;height:100px}
+footer p{margin:6px 0 0;font-weight:800}
+main{position:relative;z-index:1}
+body::before{content:"";position:fixed;inset:0;background:var(--logo) center 55%/min(80vmin,560px) no-repeat;opacity:.14;mix-blend-mode:multiply;pointer-events:none;z-index:0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body::before{filter:invert(1);mix-blend-mode:screen;opacity:.16}}
+:root[data-theme="dark"] body::before{filter:invert(1);mix-blend-mode:screen;opacity:.16}
+table input{font:inherit;width:100%;min-width:62px;padding:5px 4px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text);text-align:center;direction:ltr}
+#ct td:last-child .chip{padding:2px 10px}
+.two2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.psv{max-width:230px;margin:0 auto;touch-action:none;cursor:ns-resize;border-radius:10px}
+.rbox{background:#d9000f;color:#fff;font-size:1.7rem;font-weight:800;text-align:center;border-radius:8px;direction:ltr;padding:0 8px;margin:6px 0 2px}
+.pn label{margin-top:6px}
+#st2{min-width:620px}
+input.num{font:inherit;font-size:1.05rem;width:100%;padding:9px 10px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);direction:ltr;text-align:center}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;margin:6px 0}
+.fld label{margin-bottom:4px;line-height:1.4}
+.res{background:var(--sky);border:1px solid var(--line);border-radius:12px;padding:6px 12px;display:flex;flex-direction:column}
+.res span{font-size:.82rem;color:var(--muted);line-height:1.4}
+.res b{font-size:1.5rem;direction:ltr;text-align:center;color:var(--accent);font-weight:800;line-height:1.5}
+.res.wide{margin:8px 0}
+hr.sep{border:0;border-top:1px dashed var(--line);margin:12px 0}
+#anat .pt{transition:opacity .4s,filter .4s}
+#anat.has .pt{opacity:.25}
+#anat.has .pt.on{opacity:1;filter:drop-shadow(0 0 4px #e8590c)}
+.ring{fill:none;stroke:#e8590c;stroke-width:2.5;transform-box:fill-box;transform-origin:center;animation:rg 1.4s ease-out infinite}
+@keyframes rg{0%{transform:scale(.7);opacity:1}100%{transform:scale(1.7);opacity:0}}
+.cl{stroke:#e8590c;stroke-width:1.8;stroke-dasharray:220;stroke-dashoffset:220;animation:dr .6s forwards}
+@keyframes dr{to{stroke-dashoffset:0}}
+.knob,.scr circle{transform-box:fill-box;transform-origin:center}
+#anat .on .knob{animation:spin 2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#anat .on .bb{animation:bbl 1.6s ease-in-out infinite alternate}
+@keyframes bbl{from{transform:translateX(-4px)}to{transform:translateX(4px)}}
+#anat .on .scr circle{animation:scw 1s ease-in-out infinite alternate}
+@keyframes scw{from{transform:translateY(-1.5px)}to{transform:translateY(1.5px)}}
+.rays line,.sight{stroke:#ffd43b;stroke-width:1.2;stroke-dasharray:4 3;opacity:0}
+#anat .on .rays line,#anat .on .sight{opacity:1;animation:dsh 1s linear infinite}
+@keyframes dsh{to{stroke-dashoffset:-14}}
+#anat .on .hairs{animation:hv 1.8s ease-in-out infinite alternate}
+@keyframes hv{from{transform:translateY(-8px)}to{transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){#anat *{animation:none!important}}
+.acap{background:var(--sky);border-radius:10px;padding:8px 12px;margin:8px 0;min-height:4.2em}
+.pimgw{position:relative;display:none;margin-top:10px;max-width:100%}
+.pimgw img{max-width:100%;display:block;border-radius:10px}
+.pin{position:absolute;transform:translate(-50%,-100%);background:var(--accent);color:var(--accent-t);font-size:.75rem;font-weight:700;padding:1px 8px;border-radius:999px;white-space:nowrap;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="gm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7d97a8"/><stop offset=".5" stop-color="#34495a"/><stop offset="1" stop-color="#1c2a34"/></linearGradient>
+<radialGradient id="gl"><stop offset="0" stop-color="#b8ecff"/><stop offset=".6" stop-color="#2a7ca3"/><stop offset="1" stop-color="#0d2b3d"/></radialGradient>
+<linearGradient id="skg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fb3e0"/><stop offset="1" stop-color="#d6eefb"/></linearGradient>
+<pattern id="stp" width="8" height="7.2" patternUnits="userSpaceOnUse"><rect width="8" height="3.6" fill="#1d1d1d"/><rect y="3.6" width="8" height="3.6" fill="#f6f3ea"/></pattern>
+<clipPath id="cl"><circle cx="150" cy="120" r="116"/></clipPath>
+</defs></svg>
+<main>
+<div class="brand"><img id="lg1" src="data:image/webp;base64,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" alt="شعار م. أحمد فتحي"><div><h1>محاكي جهاز الميزان (Level)</h1><p class="by">إنشاء بواسطة: م. أحمد فتحي، مهندس مساحة</p></div></div>
+<p class="sub">سوِّ الجهاز، اقرأ القامة عند الشعيرات، احسب منسوب سطح الميزان م س، ثم أكمل دفتر الميزانية.</p>
+<nav role="tablist">
+<button role="tab" aria-selected="true" data-t="learn">الشرح</button>
+<button role="tab" aria-selected="false" data-t="sim">المحاكاة</button>
+<button role="tab" aria-selected="false" data-t="calc">حساب المناسيب</button>
+</nav>
+
+<section id="learn" class="on">
+<div class="card"><h2>أجزاء الجهاز (شرح متحرك)</h2>
+<svg id="anat" viewBox="0 0 360 285" role="img" aria-label="رسم متحرك لأجزاء جهاز الميزان"></svg>
+<div class="acap" id="acap" aria-live="polite"></div>
+<div class="row"><button class="btn" id="aplay">⏸ إيقاف</button><button class="btn ghost" id="aprev">السابق</button><button class="btn ghost" id="anext">التالي</button></div>
+<div class="row" id="achips" style="margin-top:8px"></div></div>
+<div class="card"><h2>استيراد صورة جهاز Topcon الحقيقي</h2>
+<p class="sub">اختر صورة جهازك من الجوال، ثم اختر الجزء واضغط على مكانه في الصورة لوضع علامة عليه. اضغط على العلامة لحذفها.</p>
+<div class="row"><input type="file" id="pimg" accept="image/*" aria-label="اختر صورة"><select id="ppart" class="chip" aria-label="الجزء"></select><button class="btn ghost" id="pclr">مسح العلامات</button></div>
+<div class="pimgw" id="pw"><img id="pi" alt="صورة جهاز الميزان"><div id="ppins"></div></div></div>
+<div class="card"><h2>تقسيم القامة</h2><div class="two"><svg class="eye" id="staffEx" viewBox="0 0 300 300" role="img" aria-label="تقسيم القامة"></svg>
+<div><ul><li>لكل ديسيمتر (10 سم) رقمه، ويتبادل شكل <b>E</b> مع شكل <b>3</b>.</li><li>ارتفاع الـ E خمسة سنتيمترات: ثلاثة أسنان وفراغان.</li><li>فوق الـ E مربعان صغيران، كل منهما 1 سم.</li><li>يتبدّل اللون بين الأسود والأحمر كل 20 سم.</li><li>الملّيمتر تقدّره داخل السنتيمتر الواحد.</li></ul></div></div></div>
+<div class="card"><h2>القامة والشعيرات</h2>
+<div class="two"><svg class="eye" id="eyeEx" viewBox="0 0 300 240" role="img" aria-label="مثال قراءة"></svg>
+<div><p>في المنظار ترى ثلاث شعيرات أفقية: <b>العليا U</b> و<b>الوسطى M</b> و<b>السفلى L</b>. القراءة المعتمدة للمناسيب هي <b>الوسطى</b>.</p>
+<p>مثال: الوسطى بين 1.4 و1.5، تعدّ 3 سم ثم تقدّر 7 ملّيمتر داخل الشريط، فتكون القراءة <b>1.437 م</b>.</p>
+<div class="formula">M = (U + L) / 2</div><div class="formula">D = 100 × (U − L)</div>
+<p>الفرق بين العليا والسفلى يعطي المسافة D من الجهاز إلى القامة.</p></div></div></div>
+<div class="card"><h2>خطوات العمل</h2><ol>
+<li>انصب الحامل في منتصف المسافة بين النقطتين تقريباً.</li>
+<li>سوِّ الجهاز بميزان التسوية الأفقية (ميزان المياه) حتى تتوسط الفقاعة الدائرية.</li>
+<li>اضبط العدسة العينية لتظهر الشعيرات حادة، ثم ركّز على القامة.</li>
+<li>اقرأ العليا والوسطى والسفلى على القامة.</li>
+<li>احسب منسوب سطح الميزان <b>م س</b> ثم مناسيب باقي النقاط.</li></ol>
+<div class="formula" style="direction:rtl">م س = منسوب الثابتة + قراءة القامة (BS)</div>
+<div class="formula" style="direction:rtl">منسوب أي نقطة = م س − قراءة القامة</div>
+<div class="formula">ΣBS − ΣFS = RL(last) − RL(first)</div></div>
+<button class="btn" onclick="go('sim')">ابدأ المحاكاة</button>
+</section>
+
+<section id="sim">
+<div class="card"><div class="st" id="steps"></div></div>
+<div class="card"><div class="scroll"><svg id="scene" class="wide" viewBox="0 0 700 260" role="img" aria-label="مشهد الميزانية"></svg></div></div>
+<div class="card two"><div><h2>1) ميزان التسوية الأفقية (ميزان المياه)</h2><svg class="bub" id="bub" viewBox="0 0 120 120"></svg></div>
+<div><label>ضبط ميزان المياه: يمين / يسار</label><input type="range" id="sa" min="-10" max="10" step="0.5" aria-label="ضبط ميزان المياه يمين ويسار">
+<label>ضبط ميزان المياه: أمام / خلف</label><input type="range" id="sb" min="-10" max="10" step="0.5" aria-label="ضبط ميزان المياه أمام وخلف">
+<div class="msg" id="lm"></div></div></div>
+<div class="card" id="rcard"><h2>2) القراءة على القامة</h2>
+<div class="row" id="chips"></div><p class="sub" id="role" style="margin:6px 0 8px"></p>
+<div class="two"><div><svg class="eye" id="eye" viewBox="0 0 300 240" role="img" aria-label="منظار الجهاز"></svg>
+<label>التكبير</label><input type="range" id="zm" min="1" max="4" step="0.5" value="1" aria-label="التكبير">
+<div class="row" id="foc" style="margin-top:6px"></div></div>
+<div><div class="three"><div><label>العليا U</label><input id="iu" type="number" step="0.001" inputmode="decimal"></div>
+<div><label>الوسطى M</label><input id="im" type="number" step="0.001" inputmode="decimal"></div>
+<div><label>السفلى L</label><input id="il" type="number" step="0.001" inputmode="decimal"></div></div>
+<div class="row"><button class="btn" id="rec">سجّل</button><button class="btn ghost" id="show">أرني</button></div>
+<div class="msg" id="msg" aria-live="polite"></div>
+<p class="sub">الوسطى إلزامية. سجّل العليا والسفلى لحساب المسافة. الشعيرة الوسطى تقطع الشريط الذي تقدّر منه الملّيمتر.</p></div></div></div>
+<div class="card" id="hcard"><h2>3) منسوب سطح الميزان (م س) تلقائياً</h2><div class="formula" style="direction:rtl">م س = منسوب الثابتة + قراءة القامة</div><div class="formula" style="direction:rtl">منسوب أي نقطة = م س − قراءة القامة</div><div id="auto"></div></div>
+<div class="card"><h2>دفتر الميزانية</h2><div class="scroll"><table id="book"></table></div><div class="msg" id="chk"></div></div>
+<div class="card"><h2>4) تدريب القراءة اليدوي على قامتين</h2>
+<p class="sub">الشعيرات الثلاث U وM وL مرتبطة ببعضها: اسحب بإصبعك أو الماوس على القامة لترفعها وتخفضها معاً، وحرّك القامة نفسها بالمنزلق. تظهر قراءة الوسطى في المربع الأحمر تحت كل قامة.</p>
+<div class="row" style="margin-bottom:8px"><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="phide"> أخفِ القراءة لأقرأ بنفسي</label><button class="btn ghost" id="prnd">قراءة عشوائية</button></div>
+<div class="two2" id="pwrap"></div></div>
+<button class="btn ghost" id="newEx">تمرين جديد</button>
+</section>
+
+<section id="calc">
+<div class="card"><h2>حاسبة منسوب سطح الميزان (م س)</h2>
+<div class="cgrid"><div class="fld"><label for="q1">منسوب الثابتة (م)</label><input id="q1" class="num" type="text" inputmode="decimal" value="100.000"></div>
+<div class="fld"><label for="q2">قراءة القامة BS</label><input id="q2" class="num" type="text" inputmode="decimal" placeholder="0.000"></div></div>
+<div class="res wide"><span>م س = منسوب الثابتة + قراءة القامة</span><b id="q3">—</b></div>
+<hr class="sep">
+<div class="cgrid"><div class="fld"><label for="q4">قراءة القامة على النقطة</label><input id="q4" class="num" type="text" inputmode="decimal" placeholder="0.000"></div>
+<div class="res"><span>منسوب النقطة = م س − القراءة</span><b id="q5">—</b></div></div>
+<div id="qsteps" class="msg" style="direction:rtl"></div></div>
+<div class="card"><h2>شيت القراءات المطلوبة من م س</h2>
+<div class="row" style="align-items:flex-end"><div style="max-width:240px;flex:1"><label>منسوب سطح الميزان م س (م)</label><input id="shi" class="num" type="text" inputmode="decimal"></div><button class="btn ghost" id="slk">ربط بالحاسبة</button></div>
+<div class="formula" style="direction:rtl">القراءة المطلوبة = م س − المنسوب المطلوب</div>
+<div class="scroll"><table id="st2"></table></div>
+<div class="row" style="margin-top:8px"><button class="btn" id="sadd">إضافة نقطة</button><button class="btn ghost" id="sex">مثال</button><button class="btn ghost" id="srs">مسح</button></div>
+<p class="sub">اكتب المنسوب المطلوب للنقطة فتظهر قراءة القامة المطلوبة. اكتب القراءة الفعلية عند الشعيرة الوسطى ليظهر الفرق: إذا كانت الفعلية أكبر فالأرض أخفض (ردم)، وإذا أصغر فالأرض أعلى (قطع).</p></div>
+<div class="card"><h2>دفتر الميزانية التلقائي</h2>
+<div style="max-width:220px"><label>منسوب الثابتة BM (م)</label><input id="cbm" class="num" type="text" inputmode="decimal" value="100.000"></div>
+<div class="scroll" style="margin-top:8px"><table id="ct"></table></div>
+<div class="row" style="margin-top:8px"><button class="btn" id="cadd">إضافة نقطة</button><button class="btn ghost" id="cex">مثال</button><button class="btn ghost" id="crs">مسح</button></div>
+<div class="msg" id="cchk"></div>
+<p class="sub">BS قراءة خلفية، IS وسطية، FS أمامية. لنقطة تحويل اكتب FS وBS في نفس الصف. تُحسب م س والمناسيب فور إدخال القراءة.</p></div>
+</section>
+<footer><img id="lg2" alt="شعار م. أحمد فتحي"><p>إنشاء بواسطة: م. أحمد فتحي</p><p class="sub">مهندس مساحة</p></footer>
+</main>
+<script>
+var $=function(s){return document.querySelector(s)};
+function go(t){document.querySelectorAll('nav button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.t===t)});document.querySelectorAll('section').forEach(function(s){s.classList.toggle('on',s.id===t)});window.scrollTo(0,0)}
+document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){go(b.dataset.t)}});
+function r3(x){return Math.round(x*1000)/1000}
+function f(x){return x.toFixed(3)}
+function lvl(x,y,s){return '<g transform="translate('+x+','+y+') scale('+s+')"><rect x="-26" y="18" width="52" height="4" fill="#2b3640"/><g fill="#e8590c" stroke="#222" stroke-width=".6"><circle cx="-22" cy="25" r="3.5"/><circle cx="0" cy="26" r="3.5"/><circle cx="22" cy="25" r="3.5"/></g><rect x="-18" y="29" width="36" height="5" rx="1" fill="#8d9aa3"/><rect x="-14" y="9" width="28" height="9" fill="#4a5a66"/><rect x="-46" y="-11" width="14" height="22" rx="3" fill="#26343f"/><ellipse cx="-47" cy="0" rx="3" ry="9" fill="url(#gl)"/><rect x="-34" y="-9" width="68" height="18" rx="5" fill="url(#gm)"/><rect x="-34" y="-1.5" width="68" height="3" fill="#e8590c"/><rect x="34" y="-6" width="14" height="12" rx="2" fill="#1b252d"/><rect x="34" y="-6" width="3" height="12" fill="#e8590c"/><circle cx="10" cy="0" r="6" fill="#e8590c" stroke="#222" stroke-width=".8"/><circle cx="10" cy="0" r="2" fill="#222"/><ellipse cx="-10" cy="-11" rx="7" ry="3" fill="#cfe9f3" stroke="#222" stroke-width=".6"/><ellipse cx="-10" cy="-11" rx="2" ry="1" fill="#2a7ca3"/></g>'}
+var AP=[
+ {k:'obj',sn:'الشيئية',n:'العدسة الشيئية',d:'تلتقط الضوء من القامة وتكوّن صورتها داخل المنظار.',pt:[-47,0],lp:[45,30]},
+ {k:'bub',sn:'الفقاعة',n:'ميزان المياه (الفقاعة الدائرية)',d:'عندما تتوسط الفقاعة الدائرة يكون الجهاز أفقياً.',pt:[-10,-11],lp:[135,30]},
+ {k:'foc',sn:'التركيز',n:'عجلة التركيز',d:'تُدار حتى تظهر صورة القامة حادة داخل المنظار.',pt:[10,0],lp:[225,30]},
+ {k:'eye',sn:'العينية',n:'العدسة العينية',d:'ينظر منها المساح، وتُضبط لتظهر الشعيرات حادة.',pt:[41,0],lp:[312,30]},
+ {k:'body',sn:'المنظار',n:'أنبوب المنظار',d:'يحمل العدسات والشعيرات ويدور أفقياً حول محور الجهاز، ويعطي خط نظر أفقياً.',pt:[-22,5],lp:[48,150]},
+ {k:'ret',sn:'الشعيرات',n:'شعيرات التقاطع',d:'العليا والوسطى والسفلى. نقرأ عند الوسطى، ونحسب المسافة من الفرق بين العليا والسفلى.',g:[305,190],lp:[305,148]},
+ {k:'foot',sn:'التسوية',n:'ميزان التسوية الأفقية (قاعدة التسوية)',d:'تحريكها يوسّط الفقاعة فيصير الجهاز أفقياً.',pt:[-22,25],lp:[55,215]},
+ {k:'tri',sn:'الحامل',n:'الحامل الثلاثي',d:'يثبّت الجهاز على الأرض ويمكن ضبط ارتفاع أرجله.',pt:[12,32],lp:[290,276]}];
+var ai=0,aon=!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+function aG(p){return p.g?p.g:[180+3*p.pt[0],100+3*p.pt[1]]}
+function aShow(i){
+  ai=(i+AP.length)%AP.length;var p=AP[ai],g=aG(p);
+  $('#anat').classList.add('has');
+  AP.forEach(function(q){$('#ap-'+q.k).classList.toggle('on',q===p)});
+  var y0=p.lp[1]+(p.lp[1]<100?6:-14);
+  $('#acall').innerHTML=(p.k==='ret'?'':'<line class="cl" x1="'+p.lp[0]+'" y1="'+y0+'" x2="'+g[0]+'" y2="'+g[1]+'"/>')+'<circle class="ring" cx="'+g[0]+'" cy="'+g[1]+'" r="'+(p.k==='ret'?36:14)+'"/><text x="'+p.lp[0]+'" y="'+p.lp[1]+'" text-anchor="middle" font-size="13" font-weight="800" fill="var(--text)" font-family="Cairo,sans-serif">'+p.sn+'</text>';
+  $('#acap').innerHTML='<b>'+(ai+1)+') '+p.n+'</b><br>'+p.d;
+  document.querySelectorAll('#achips .chip').forEach(function(c){c.setAttribute('aria-pressed',+c.dataset.a===ai)});
+}
+function aPlay(on){aon=on;$('#aplay').textContent=on?'⏸ إيقاف':'▶ تشغيل'}
+function anat(){
+  var T='<g transform="translate(180,100) scale(3)">';
+  var s='<defs><clipPath id="clr"><circle cx="305" cy="190" r="28"/></clipPath></defs>'+T;
+  s+='<g class="pt" id="ap-tri"><g stroke="#6b5a3a" stroke-width="1.8" stroke-linecap="round"><line x1="0" y1="34" x2="-18.3" y2="54"/><line x1="0" y1="34" x2="18.3" y2="54"/><line x1="0" y1="34" x2="0" y2="55.3"/></g><rect x="-18" y="29" width="36" height="5" rx="1" fill="#8d9aa3"/></g>';
+  s+='<g class="pt" id="ap-foot"><rect x="-26" y="18" width="52" height="4" fill="#2b3640"/><g class="scr" fill="#e8590c" stroke="#222" stroke-width=".6"><circle cx="-22" cy="25" r="3.5"/><circle cx="0" cy="26" r="3.5"/><circle cx="22" cy="25" r="3.5"/></g><rect x="-14" y="9" width="28" height="9" fill="#4a5a66"/></g>';
+  s+='<g class="pt" id="ap-body"><rect x="-34" y="-9" width="68" height="18" rx="5" fill="url(#gm)"/><rect x="-34" y="-1.5" width="68" height="3" fill="#e8590c"/><line class="sight" x1="-47" y1="0" x2="48" y2="0"/></g>';
+  s+='<g class="pt" id="ap-obj"><rect x="-46" y="-11" width="14" height="22" rx="3" fill="#26343f"/><ellipse cx="-47" cy="0" rx="3" ry="9" fill="url(#gl)"/><g class="rays"><line x1="-52" y1="-8" x2="-70" y2="-14"/><line x1="-52" y1="0" x2="-72" y2="0"/><line x1="-52" y1="8" x2="-70" y2="14"/></g></g>';
+  s+='<g class="pt" id="ap-eye"><rect x="34" y="-6" width="14" height="12" rx="2" fill="#1b252d"/><rect x="34" y="-6" width="3" height="12" fill="#e8590c"/></g>';
+  s+='<g class="pt" id="ap-bub"><ellipse cx="-10" cy="-11" rx="7" ry="3" fill="#cfe9f3" stroke="#222" stroke-width=".6"/><ellipse class="bb" cx="-10" cy="-11" rx="2" ry="1" fill="#2a7ca3"/></g>';
+  s+='<g class="pt" id="ap-foc"><g class="knob"><circle cx="10" cy="0" r="6" fill="#e8590c" stroke="#222" stroke-width=".8"/><line x1="10" y1="0" x2="10" y2="-5" stroke="#222" stroke-width="1.2"/></g></g></g>';
+  s+='<g class="pt" id="ap-ret"><circle cx="305" cy="190" r="30" fill="#e9eef0" stroke="#3a4650" stroke-width="3"/><g clip-path="url(#clr)"><g class="hairs" stroke="#e03131"><line x1="270" x2="340" y1="190" y2="190" stroke-width="1.8"/><line x1="285" x2="325" y1="177" y2="177" stroke-width="1.2"/><line x1="285" x2="325" y1="203" y2="203" stroke-width="1.2"/><line x1="305" x2="305" y1="177" y2="203" stroke-width="1"/></g></g></g>';
+  s+='<g id="acall"></g>';
+  $('#anat').innerHTML=s;
+  $('#achips').innerHTML=AP.map(function(p,i){return '<button class="chip" data-a="'+i+'" aria-pressed="false">'+p.sn+'</button>'}).join('');
+  document.querySelectorAll('#achips .chip').forEach(function(c){c.onclick=function(){aPlay(false);aShow(+c.dataset.a)}});
+  $('#aplay').onclick=function(){aPlay(!aon)};
+  $('#aprev').onclick=function(){aPlay(false);aShow(ai-1)};
+  $('#anext').onclick=function(){aPlay(false);aShow(ai+1)};
+  $('#ppart').innerHTML=AP.map(function(p,i){return '<option value="'+i+'">'+p.n+'</option>'}).join('');
+  aPlay(aon);aShow(0);setInterval(function(){if(aon)aShow(ai+1)},4200);
+  var pins=[];
+  function pinR(){$('#ppins').innerHTML=pins.map(function(p,i){return '<span class="pin" data-i="'+i+'" style="left:'+p.x+'%;top:'+p.y+'%">'+p.n+'</span>'}).join('')}
+  $('#pimg').onchange=function(){var fl=this.files[0];if(!fl)return;var rd=new FileReader();rd.onload=function(){$('#pi').src=rd.result;$('#pw').style.display='inline-block';pins=[];pinR()};rd.readAsDataURL(fl)};
+  $('#pw').onclick=function(e){var r=$('#pi').getBoundingClientRect(),x=(e.clientX-r.left)/r.width*100,y=(e.clientY-r.top)/r.height*100;if(x<0||x>100||y<0||y>100)return;pins.push({x:x,y:y,n:AP[+$('#ppart').value].sn});pinR()};
+  $('#ppins').onclick=function(e){var i=e.target.dataset.i;if(i===undefined)return;e.stopPropagation();pins.splice(+i,1);pinR()};
+  $('#pclr').onclick=function(){pins=[];pinR()};
+}
+function eyeSVG(M,i,zm,foc){
+  var c=foc==='U'?M+i/2:foc==='L'?M-i/2:M,k=Math.min(1200,170/i)*zm,yv=function(v){return 120-(v-c)*k};
+  var s='<circle cx="150" cy="120" r="118" fill="#111"/><g clip-path="url(#cl)"><rect width="300" height="240" fill="#26292d"/>';
+  s+='<rect x="60" y="0" width="150" height="240" fill="#fbfdff"/>'+staffCells(60,150,yv,c-125/k,c+125/k,true);
+  var yU=yv(M+i/2),yM=yv(M),yL=yv(M-i/2);
+  s+='<g stroke="#e03131" fill="#e03131"><line x1="34" x2="266" y1="'+yM+'" y2="'+yM+'" stroke-width="2"/><line x1="100" x2="200" y1="'+yU+'" y2="'+yU+'" stroke-width="1.5"/><line x1="100" x2="200" y1="'+yL+'" y2="'+yL+'" stroke-width="1.5"/><line x1="150" x2="150" y1="'+yU+'" y2="'+yL+'" stroke-width="1"/>';
+  s+='<g stroke="none" font-size="13" font-weight="800" font-family="Cairo,sans-serif"><text x="46" y="'+(yU-4)+'">U</text><text x="46" y="'+(yM-4)+'">M</text><text x="46" y="'+(yL-4)+'">L</text></g></g></g><circle cx="150" cy="120" r="116" fill="none" stroke="#3a4650" stroke-width="5"/>';
+  return s;
+}
+function staffCells(xl,W,yv,v0,v1,lab){
+  var s='',n0=Math.max(0,Math.floor(v0*10)),n1=Math.ceil(v1*10);
+  for(var n=n0;n<=n1;n++){
+    var b=n/10,col=Math.floor(n/2)%2===0?'#e05a5a':'#26332f',E=n%2===0,h=yv(b)-yv(b+.01);
+    var sx=E?xl:xl+.756*W,sw=E?.267*W:.244*W,px=E?xl+.267*W:xl+.506*W,pw=E?.239*W:.25*W;
+    s+='<rect x="'+sx+'" y="'+yv(b+.05)+'" width="'+sw+'" height="'+(5*h)+'" fill="'+col+'"/>';
+    [0,2,4,6,8].forEach(function(c){s+='<rect x="'+px+'" y="'+yv(b+(c+1)/100)+'" width="'+pw+'" height="'+h+'" fill="'+col+'"/>'});
+    if(lab)s+='<line x1="'+xl+'" x2="'+(xl+W)+'" y1="'+yv(b)+'" y2="'+yv(b)+'" stroke="#8fc0d6"/><text x="'+(E?xl+.6*W:xl+.08*W)+'" y="'+(yv(b)-3)+'" font-size="'+Math.min(16,h*4)+'" font-weight="700" fill="'+col+'" font-family="Cairo,sans-serif">'+(n/10).toFixed(1)+'</text>';
+  }
+  return s;
+}
+var NAMES=['BM','A','B','C'],ROLES=['قراءة خلفية BS على نقطة معلومة المنسوب','قراءة وسطية IS','قراءة وسطية IS','قراءة أمامية FS'];
+var X=[80,230,470,620],pts,HI,sel=0,rec,rU,rL,hiOK,lev,foc='M';
+function Y(rl){return 244-(rl-98)*36}
+function newEx(){
+  var bs=r3(1.2+Math.random()*0.6);HI=r3(100+bs);pts=[{rl:100}];
+  for(var i=1;i<4;i++)pts.push({rl:r3(98.6+Math.random()*(i===3?2.0:1.5))});
+  pts.forEach(function(p,i){p.name=NAMES[i];p.rd=r3(HI-p.rl);var d=Math.round((Math.abs(X[i]-350)*0.12+Math.random()*4)/0.2)*0.2;p.d=r3(d);p.i=r3(d/100)});
+  rec=[null,null,null,null];rU=[];rL=[];hiOK=false;sel=0;foc='M';
+  lev={a:(Math.random()<.5?-1:1)*(4+Math.random()*5),b:(Math.random()<.5?-1:1)*(4+Math.random()*5)};
+  $('#sa').value=lev.a;$('#sb').value=lev.b;$('#zm').value=1;clr();draw();
+}
+function clr(){$('#msg').textContent='';['iu','im','il'].forEach(function(id){$('#'+id).value=''})}
+function isLev(){return Math.abs(lev.a)<=1&&Math.abs(lev.b)<=1}
+function draw(){hiOK=rec[0]!==null;
+  var s='<rect width="700" height="260" fill="url(#skg)"/><ellipse cx="150" cy="40" rx="50" ry="12" fill="#fff" opacity=".7"/><ellipse cx="540" cy="55" rx="60" ry="13" fill="#fff" opacity=".6"/>';
+  var g=pts.map(function(p,i){return X[i]+','+Y(p.rl)}).join(' L');
+  var gp='M0,'+Y(pts[0].rl)+' L'+g+' L700,'+Y(pts[3].rl);
+  s+='<path d="'+gp+' L700,260 L0,260Z" fill="#8a7650"/><path d="'+gp+'" fill="none" stroke="#5f8a3a" stroke-width="6"/>';
+  var gi=(Y(pts[1].rl)+Y(pts[2].rl))/2,iy=Y(HI);
+  s+='<g stroke="#6b5a3a" stroke-width="3.5" stroke-linecap="round"><line x1="350" y1="'+(iy+27)+'" x2="320" y2="'+(gi+2)+'"/><line x1="350" y1="'+(iy+27)+'" x2="382" y2="'+(gi+2)+'"/><line x1="350" y1="'+(iy+27)+'" x2="350" y2="'+(gi+6)+'"/></g>'+lvl(350,iy,.9);
+  s+='<line x1="0" y1="'+iy+'" x2="700" y2="'+iy+'" stroke="#e8590c" stroke-width="1" stroke-dasharray="2 5" opacity=".7"/><line x1="350" y1="'+iy+'" x2="'+X[sel]+'" y2="'+iy+'" stroke="#e8590c" stroke-width="2" stroke-dasharray="7 4"/>';
+  s+='<text x="8" y="'+(iy-6)+'" font-size="13" font-weight="700" fill="#7a2e00" font-family="Cairo,sans-serif">'+(hiOK?'م س = '+f(hs())+' م':'خط النظر')+'</text>';
+  pts.forEach(function(p,i){var y=Y(p.rl),a=i===sel,x=X[i];
+    s+='<g opacity="'+(a?1:.7)+'"><rect x="'+(x-7)+'" y="'+(y-126)+'" width="14" height="126" fill="#fbfdff" stroke="'+(a?'#e8590c':'#222')+'" stroke-width="'+(a?2.5:1)+'"/>'+staffCells(x-7,14,function(v){return y-v*36},0,3.5,false)+'</g><rect x="'+(x-9)+'" y="'+(y-3)+'" width="18" height="3" fill="#333"/>';
+    for(var m=1;m<=3;m++)s+='<text x="'+(x+11)+'" y="'+(y-m*36+4)+'" font-size="10" font-weight="700" fill="#222" font-family="Cairo,sans-serif">'+m+'</text>';
+    s+='<text x="'+x+'" y="'+(y+20)+'" text-anchor="middle" font-size="15" font-weight="800" fill="#fff" font-family="Cairo,sans-serif">'+p.name+'</text>';});
+  var p=pts[sel],py=Y(p.rl);
+  s+='<circle cx="'+X[sel]+'" cy="'+iy+'" r="4.5" fill="#e03131"/>';
+  if(rec[sel]!==null)s+='<line x1="'+(X[sel]-16)+'" y1="'+py+'" x2="'+(X[sel]-16)+'" y2="'+iy+'" stroke="#0b7285" stroke-width="2"/><text x="'+(X[sel]-20)+'" y="'+((py+iy)/2)+'" text-anchor="end" font-size="13" font-weight="800" fill="#0b7285" font-family="Cairo,sans-serif">'+f(rec[sel])+'</text>';
+  $('#scene').innerHTML=s;
+  bub();chips();eye();book();steps();
+  $('#role').textContent='النقطة '+p.name+': '+ROLES[sel];
+  $('#rcard').classList.toggle('lock',!isLev());
+  $('#hcard').classList.toggle('lock',rec[0]===null);
+  auto();
+}
+function bub(){
+  var cx=60+lev.a*3.6,cy=60+lev.b*3.6,ok=isLev();
+  $('#bub').innerHTML='<circle cx="60" cy="60" r="54" fill="#cfe9f3" stroke="'+(ok?'#2b8a3e':'#444')+'" stroke-width="5"/><circle cx="60" cy="60" r="11" fill="none" stroke="#333" stroke-dasharray="3 3"/><circle cx="'+cx+'" cy="'+cy+'" r="9" fill="rgba(255,255,255,.75)" stroke="#2a7ca3" stroke-width="2"/>';
+  var m=$('#lm');m.className='msg '+(ok?'ok':'');m.textContent=ok?'الجهاز أفقي ✓':'اضبط ميزان التسوية الأفقية حتى تتوسط الفقاعة الدائرة.';
+}
+function steps(){
+  var d=[isLev(),rec[0]!==null,hiOK,rec.every(function(x){return x!==null})],n=['تسوية','قراءة BS','حساب م س','قراءة النقاط'];
+  $('#steps').innerHTML=n.map(function(t,i){return '<span class="'+(d[i]?'d':'')+'">'+(i+1)+') '+t+(d[i]?' ✓':'')+'</span>'}).join('');
+}
+function chips(){
+  $('#chips').innerHTML=NAMES.map(function(n,i){return '<button class="chip'+(rec[i]!==null?' done':'')+'" aria-pressed="'+(i===sel)+'" data-i="'+i+'">'+n+'</button>'}).join('');
+  document.querySelectorAll('#chips .chip').forEach(function(c){c.onclick=function(){sel=+c.dataset.i;clr();draw()}});
+  $('#foc').innerHTML=[['U','العليا'],['M','الوسطى'],['L','السفلى']].map(function(a){return '<button class="chip" aria-pressed="'+(foc===a[0])+'" data-f="'+a[0]+'">'+a[1]+'</button>'}).join('');
+  document.querySelectorAll('#foc .chip').forEach(function(c){c.onclick=function(){foc=c.dataset.f;draw()}});
+}
+function eye(){$('#eye').innerHTML=eyeSVG(pts[sel].rd,pts[sel].i,+$('#zm').value,foc)}
+function book(){
+  var h='<tr><th>النقطة</th><th>BS</th><th>IS</th><th>FS</th><th>م.س</th><th>RL</th><th>D</th></tr>';
+  NAMES.forEach(function(n,i){
+    var v=rec[i],c=['','',''],rl='',d='';
+    if(i===0){rl='100.000';if(v!==null)c[0]=f(v)}
+    else if(v!==null){c[i===3?2:1]=f(v);rl=hiOK?f(r3(hs()-v)):'—'}
+    if(rU[i]!==undefined&&rL[i]!==undefined)d=(100*(rU[i]-rL[i])).toFixed(1);
+    h+='<tr><td><b>'+n+'</b></td><td>'+c[0]+'</td><td>'+c[1]+'</td><td>'+c[2]+'</td><td>'+(i===0&&hiOK?f(hs()):'')+'</td><td>'+rl+'</td><td>'+d+'</td></tr>';
+  });
+  $('#book').innerHTML=h;var m=$('#chk');
+  if(rec.every(function(x){return x!==null})&&hiOK){
+    var dd=r3(rec[0]-rec[3]),rc=r3(pts[3].rl-100),ok=Math.abs(dd-rc)<0.005;
+    m.className='msg '+(ok?'ok':'bad');
+    m.textContent='ΣBS − ΣFS = '+f(rec[0])+' − '+f(rec[3])+' = '+f(dd)+(ok?' ✓ يطابق فرق المنسوب، دفتر صحيح.':' ✗ راجع القراءات.');
+  }else{m.className='msg';m.textContent='أكمل القراءات وحساب HI لتظهر مراجعة الحساب.'}
+}
+function hs(){return rec[0]!==null?r3(100+rec[0]):null}
+function auto(){var h='';
+  if(rec[0]===null)h='<p class="sub">سجّل قراءة BS على النقطة BM فتُحسب م س ومناسيب النقاط تلقائياً.</p>';
+  else{var H=hs();h='<div class="formula" style="direction:rtl">م س = 100.000 + '+f(rec[0])+' = '+f(H)+' م</div>';
+    for(var i=1;i<4;i++)if(rec[i]!==null)h+='<div class="formula" style="direction:rtl">منسوب '+NAMES[i]+' = '+f(H)+' − '+f(rec[i])+' = '+f(r3(H-rec[i]))+' م</div>'}
+  $('#auto').innerHTML=h}
+function near(a,b,t){return !isNaN(a)&&Math.abs(a-b)<=t}
+$('#sa').oninput=function(){lev.a=+this.value;bub();draw()};
+$('#sb').oninput=function(){lev.b=+this.value;bub();draw()};
+$('#zm').oninput=eye;
+$('#rec').onclick=function(){
+  var m=$('#msg'),M=parseFloat($('#im').value),U=parseFloat($('#iu').value),L=parseFloat($('#il').value),p=pts[sel],t=0.004;
+  m.className='msg bad';
+  if(isNaN(M)){m.textContent='اكتب قراءة الشعيرة الوسطى بالمتر، مثل 1.437';return}
+  if(!near(M,p.rd,t)){m.textContent=Math.abs(M-p.rd)>=0.1?'بعيدة. اقرأ الرقم الأقرب للشعيرة الوسطى ثم عدّ السنتيمترات.':'قريبة. حدّد السنتيمتر ثم قدّر الملّيمتر داخل الشريط (جرّب التكبير).';return}
+  var u=p.rd+p.i/2,l=p.rd-p.i/2;
+  if(!isNaN(U)&&!near(U,u,t)){m.textContent='الوسطى صحيحة، لكن قراءة العليا غير دقيقة.';return}
+  if(!isNaN(L)&&!near(L,l,t)){m.textContent='الوسطى صحيحة، لكن قراءة السفلى غير دقيقة.';return}
+  rec[sel]=M;var x='صحيح ✓ الوسطى = '+f(p.rd);
+  if(!isNaN(U)&&!isNaN(L)){rU[sel]=U;rL[sel]=L;x+=' ، (U+L)/2 = '+f((U+L)/2)+' ، المسافة D = '+(100*(U-L)).toFixed(1)+' م'}
+  draw();m=$('#msg');m.className='msg ok';m.textContent=x;
+};
+$('#show').onclick=function(){var p=pts[sel];$('#im').value=f(p.rd);$('#iu').value=f(p.rd+p.i/2);$('#il').value=f(p.rd-p.i/2)};
+$('#newEx').onclick=newEx;
+var cRows=[];
+function cNum(v){v=String(v).replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/[٫,،]/g,'.');var x=parseFloat(v);return isNaN(x)?NaN:x}
+function cBlank(n){return {n:n,bs:'',is:'',fs:''}}
+function cRender(){var h='<tr><th>النقطة</th><th>BS</th><th>IS</th><th>FS</th><th>م.س</th><th>RL</th><th></th></tr>';
+  cRows.forEach(function(r,i){h+='<tr><td><input type="text" data-r="'+i+'" data-k="n" value="'+String(r.n).replace(/"/g,'&quot;')+'"></td>'+['bs','is','fs'].map(function(k){return '<td><input type="text" inputmode="decimal" data-r="'+i+'" data-k="'+k+'" value="'+r[k]+'"></td>'}).join('')+'<td id="ch'+i+'"></td><td id="cl'+i+'"></td><td><button class="chip" data-d="'+i+'" aria-label="حذف الصف">×</button></td></tr>'});
+  $('#ct').innerHTML=h;cCalc()}
+function cCalc(){
+  var bm=cNum($('#cbm').value),H=null,sb=0,sf=0,first=null,lastRL=null,sbAt=0,sfAt=0;
+  cRows.forEach(function(r,i){
+    var bs=cNum(r.bs),is=cNum(r.is),fs=cNum(r.fs),rl=NaN,hi=NaN;
+    if(!isNaN(fs)){if(H!==null)rl=H-fs}
+    else if(!isNaN(is)){if(H!==null)rl=H-is}
+    else if(!isNaN(bs)&&H===null&&!isNaN(bm))rl=bm;
+    if(!isNaN(bs)&&!isNaN(rl)){H=rl+bs;hi=H}
+    if(!isNaN(bs))sb+=bs;if(!isNaN(fs))sf+=fs;
+    if(first===null&&!isNaN(rl))first=rl;
+    if(!isNaN(fs)&&!isNaN(rl)){lastRL=rl;sbAt=sb-(isNaN(bs)?0:bs);sfAt=sf}
+    $('#ch'+i).textContent=isNaN(hi)?'':f(r3(hi));
+    $('#cl'+i).innerHTML=isNaN(rl)?'':'<b>'+f(r3(rl))+'</b>';
+  });
+  var m=$('#cchk');
+  if(first!==null&&lastRL!==null){var d=r3(sbAt-sfAt),e=r3(lastRL-first),ok=Math.abs(d-e)<0.0015;
+    m.className='msg '+(ok?'ok':'bad');m.textContent='ΣBS − ΣFS = '+f(sbAt)+' − '+f(sfAt)+' = '+f(d)+' ، فرق المنسوب = '+f(e)+(ok?' ✓ الحساب صحيح':' ✗ راجع الحساب')}
+  else{m.className='msg';m.textContent='أدخل منسوب الثابتة والقراءات لتظهر المناسيب ومراجعة الحساب تلقائياً.'}
+}
+function qc(){var a=cNum($('#q1').value),b=cNum($('#q2').value),c=cNum($('#q4').value),H=a+b;
+  $('#q3').textContent=isNaN(H)?'—':f(r3(H));$('#q5').textContent=isNaN(H-c)?'—':f(r3(H-c));
+  var t='';if(!isNaN(H))t+='م س = '+f(a)+' + '+f(b)+' = '+f(r3(H));if(!isNaN(H-c))t+='<br>منسوب النقطة = '+f(r3(H))+' − '+f(c)+' = '+f(r3(H-c))+' م';
+  $('#qsteps').innerHTML=t;if(!isNaN(H)&&!shiManual){$('#shi').value=f(r3(H));sCalc()}}
+['q1','q2','q4'].forEach(function(id){$('#'+id).oninput=qc});
+$('#cbm').oninput=cCalc;
+$('#ct').addEventListener('input',function(e){var t=e.target;if(t.dataset.r===undefined)return;cRows[+t.dataset.r][t.dataset.k]=t.value;cCalc()});
+$('#ct').addEventListener('click',function(e){var d=e.target.dataset.d;if(d===undefined)return;cRows.splice(+d,1);cRender()});
+$('#cadd').onclick=function(){cRows.push(cBlank(cRows.length===0?'BM':String.fromCharCode(64+cRows.length)));cRender()};
+$('#crs').onclick=function(){cRows=[cBlank('BM'),cBlank('A'),cBlank('B')];$('#cbm').value='100.000';cRender()};
+$('#cex').onclick=function(){$('#cbm').value='100.000';cRows=[{n:'BM',bs:'1.437',is:'',fs:''},{n:'A',bs:'',is:'2.105',fs:''},{n:'B',bs:'',is:'0.882',fs:''},{n:'TP1',bs:'1.356',is:'',fs:'2.410'},{n:'C',bs:'',is:'',fs:'0.998'}];cRender()};
+var P=[{v0:1.2,y:[110,180,250]},{v0:2.4,y:[130,190,250]}],K=800,drag=null;
+function pv(i,y){return r3(P[i].v0+(360-y)/K)}
+function pdraw(i){var p=P[i],yv=function(v){return 360-(v-p.v0)*K};
+  var s='<rect width="200" height="360" fill="#26292d"/><rect x="40" y="0" width="120" height="360" fill="#fbfdff"/>'+staffCells(40,120,yv,p.v0-0.01,p.v0+0.46,true);
+  ['U','M','L'].forEach(function(n,j){var y=p.y[j];s+='<line x1="0" x2="200" y1="'+y+'" y2="'+y+'" stroke="#e03131" stroke-width="'+(j===1?2.5:1.6)+'"/><circle cx="182" cy="'+y+'" r="11" fill="#e03131" stroke="#fff" stroke-width="1.5"/><text x="182" y="'+(y+4)+'" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" font-family="Cairo,sans-serif">'+n+'</text>'});
+  $('#ps'+i).innerHTML=s;
+  var U=pv(i,p.y[0]),M=pv(i,p.y[1]),L=pv(i,p.y[2]),h=$('#phide').checked;
+  $('#pb'+i).textContent=h?'؟؟؟':f(M);
+  $('#pd'+i).textContent=h?'':'U = '+f(U)+' | L = '+f(L)+' | D = '+(100*Math.abs(U-L)).toFixed(1)+' م';
+}
+function pinit(i){var sv=$('#ps'+i);
+  function yy(e){var r=sv.getBoundingClientRect();return (e.clientY-r.top)*360/r.height}
+  sv.addEventListener('pointerdown',function(e){drag={i:i,off:yy(e)-P[i].y[1]};sv.setPointerCapture(e.pointerId);e.preventDefault()});
+  sv.addEventListener('pointermove',function(e){if(!drag||drag.i!==i)return;var p=P[i],d0=p.y[0]-p.y[1],d2=p.y[2]-p.y[1],m=yy(e)-drag.off;m=Math.max(8-Math.min(0,d0,d2),Math.min(352-Math.max(0,d0,d2),m));p.y=[m+d0,m,m+d2];pdraw(i)});
+  var end=function(){drag=null};sv.addEventListener('pointerup',end);sv.addEventListener('pointercancel',end);
+  $('#pr'+i).oninput=function(){P[i].v0=+this.value;pdraw(i)};
+  document.querySelector('[data-pc="'+i+'"]').onclick=function(){var g=parseFloat($('#pg'+i).value),m=$('#pm'+i),M=pv(i,P[i].y[1]);if(isNaN(g))return;
+    if(Math.abs(g-M)<=0.004){m.className='msg ok';m.textContent='صحيح ✓ القراءة '+f(M)}else{m.className='msg bad';m.textContent=Math.abs(g-M)>=0.1?'بعيدة: انظر رقم الديسيمتر ثم عدّ السنتيمترات.':'قريبة: دقّق في الملّيمتر داخل السنتيمتر.'}}
+}
+function pbuild(){
+  $('#pwrap').innerHTML=[0,1].map(function(i){return '<div class="pn"><b>القامة '+(i+1)+'</b><svg class="psv" id="ps'+i+'" viewBox="0 0 200 360" role="img" aria-label="قامة '+(i+1)+'"></svg><label>تحريك القامة (رفع / خفض)</label><input type="range" id="pr'+i+'" min="0.05" max="3.2" step="0.001" value="'+P[i].v0+'" aria-label="تحريك القامة '+(i+1)+'"><div class="rbox" id="pb'+i+'"></div><div class="sub" id="pd'+i+'" style="text-align:center;margin:2px 0"></div><div class="row"><input type="number" id="pg'+i+'" step="0.001" inputmode="decimal" placeholder="قراءتي" style="width:92px"><button class="btn" data-pc="'+i+'">تحقق</button></div><div class="msg" id="pm'+i+'"></div></div>'}).join('');
+  [0,1].forEach(function(i){pinit(i);pdraw(i)});
+}
+$('#phide').onchange=function(){pdraw(0);pdraw(1)};
+$('#prnd').onclick=function(){[0,1].forEach(function(i){var p=P[i],m=120+Math.random()*120,sp=40+Math.random()*50;p.v0=r3(0.3+Math.random()*2.6);p.y=[m-sp,m,m+sp];$('#pr'+i).value=p.v0;$('#pg'+i).value='';$('#pm'+i).textContent='';pdraw(i)})};
+var shiManual=false,sRows=[];
+function sBlank(n){return {n:n,rl:'',act:''}}
+function sRender(){var h='<tr><th>النقطة</th><th>المنسوب المطلوب</th><th>القراءة المطلوبة</th><th>القراءة الفعلية</th><th>الفرق</th><th>الحالة</th><th></th></tr>';
+  sRows.forEach(function(r,i){h+='<tr><td><input type="text" data-r="'+i+'" data-k="n" value="'+String(r.n).replace(/"/g,'&quot;')+'"></td><td><input type="text" inputmode="decimal" data-r="'+i+'" data-k="rl" value="'+r.rl+'"></td><td id="sq'+i+'"></td><td><input type="text" inputmode="decimal" data-r="'+i+'" data-k="act" value="'+r.act+'"></td><td id="sd'+i+'"></td><td id="ss'+i+'"></td><td><button class="chip" data-d="'+i+'" aria-label="حذف الصف">×</button></td></tr>'});
+  $('#st2').innerHTML=h;sCalc()}
+function sCalc(){var H=cNum($('#shi').value);
+  sRows.forEach(function(r,i){var rl=cNum(r.rl),a=cNum(r.act),q=H-rl,d=a-q;
+    $('#sq'+i).innerHTML=isNaN(q)?'':'<b>'+f(r3(q))+'</b>';
+    $('#sd'+i).textContent=isNaN(d)?'':(d>0?'+':'')+f(r3(d));
+    var st='';if(!isNaN(d)){var dd=r3(d);st=Math.abs(dd)<0.0005?'مطابق ✓':(dd>0?'ردم '+f(dd):'قطع '+f(-dd))}
+    $('#ss'+i).textContent=st})}
+$('#shi').oninput=function(){shiManual=true;sCalc()};
+$('#slk').onclick=function(){shiManual=false;qc()};
+$('#st2').addEventListener('input',function(e){var t=e.target;if(t.dataset.r===undefined)return;sRows[+t.dataset.r][t.dataset.k]=t.value;sCalc()});
+$('#st2').addEventListener('click',function(e){var d=e.target.dataset.d;if(d===undefined)return;sRows.splice(+d,1);sRender()});
+$('#sadd').onclick=function(){sRows.push(sBlank(String.fromCharCode(65+sRows.length%26)));sRender()};
+$('#srs').onclick=function(){sRows=[sBlank('A'),sBlank('B'),sBlank('C')];sRender()};
+$('#sex').onclick=function(){shiManual=true;$('#shi').value='101.437';sRows=[{n:'A',rl:'100.250',act:'1.250'},{n:'B',rl:'99.800',act:'1.600'},{n:'C',rl:'101.000',act:'0.437'}];sRender()};
+function calcInit(){sRows=[sBlank('A'),sBlank('B'),sBlank('C')];cRows=[cBlank('BM'),cBlank('A'),cBlank('B')];cRender();sRender();qc()}
+anat();$('#lg2').src=$('#lg1').src;document.documentElement.style.setProperty('--logo','url("'+$('#lg1').src+'")');$('#staffEx').innerHTML='<rect width="300" height="300" fill="#26292d"/><rect x="80" y="0" width="140" height="300" fill="#fbfdff"/>'+staffCells(80,140,function(v){return 285-(v-1)*600},1,1.5,true);$('#eyeEx').innerHTML=eyeSVG(1.437,0.24,1,'M');newEx();calcInit();pbuild();
+</script>
+</body>
+</html>
